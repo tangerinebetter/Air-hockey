@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1738852253 source:c:\users\acer.desktop-3bc4qkf\pictures\game\testsdl\main.cpp
+	<iostream>
+	<SDL.h>
+
+1739113609 source:d:\game\game\testsdl\main.cpp
+	<iostream>
+	<SDL.h>
+	<SDL_image.h>
+
