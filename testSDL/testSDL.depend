@@ -8,3 +8,17 @@
 	<SDL.h>
 	<SDL_image.h>
 
+1741618019 source:d:\game\air-hockey\testsdl\main.cpp
+	<iostream>
+	<SDL.h>
+	<SDL_image.h>
+	"defs.h"
+	"graphics.h"
+	"game.h"
+
+1741617882 d:\game\air-hockey\testsdl\defs.h
+
+1741617974 d:\game\air-hockey\testsdl\graphics.h
+
+1741617868 d:\game\air-hockey\testsdl\game.h
+
