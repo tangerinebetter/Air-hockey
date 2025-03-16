@@ -1,6 +1,10 @@
 #ifndef GRAPHICS_H_INCLUDED
 #define GRAPHICS_H_INCLUDED
 
+#include <SDL.h>
+#include <SDL_image.h>
+#include "defs.h"
+
 struct Graphics {
     SDL_Renderer *renderer;
     SDL_Window *window;
@@ -38,7 +42,13 @@ struct Graphics {
         SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
     }
 
-    void prepareScene(SDL_Texture * background)
+    void prepareScene()
+    {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+    }
+
+	void prepareScene(SDL_Texture * background)
     {
         SDL_RenderClear(renderer);
         SDL_RenderCopy( renderer, background, NULL, NULL);
@@ -81,6 +91,5 @@ struct Graphics {
         SDL_Quit();
     }
 };
-
 
 #endif // GRAPHICS_H_INCLUDED

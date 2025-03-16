@@ -3,45 +3,34 @@
 #include<SDL_image.h>
 #include "defs.h"
 #include "graphics.h"
-#include "game.h"
-
+#include "logic.h"
 using namespace std;
 
-void waitUntilKeyPressed()
-{
-    SDL_Event e;
-    while (true) {
-        if ( SDL_PollEvent(&e) != 0 &&
-             (e.type == SDL_KEYDOWN || e.type == SDL_QUIT) )
-            return;
-        SDL_Delay(100);
-    }
-}
 
 
 int main(int argc, char *argv[])
 {
     Graphics graphics;
     graphics.init();
+    Mouse mouse;
+    mouse.x = SCREEN_WIDTH / 2;
+    mouse.y = SCREEN_HEIGHT / 2;
 
-    SDL_Texture* background = graphics.loadTexture("bikiniBottom.jpg");
-    graphics.prepareScene(background);
+    bool quit = false;
+    SDL_Event event;
+    while (!quit && !gameOver(mouse)) {
+        graphics.prepareScene();
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) quit = true;
+        }
+        moveimage(mouse,graphics);
 
-    graphics.presentScene();
-    waitUntilKeyPressed();
+        graphics.presentScene();
+        SDL_Delay(10);
+    }
 
-    SDL_Texture* spongeBob = graphics.loadTexture("Spongebob.png");
-    graphics.renderTexture(spongeBob, 200, 200);
-
-    graphics.presentScene();
-    waitUntilKeyPressed();
-
-    SDL_DestroyTexture( spongeBob );
-    spongeBob = NULL;
-    SDL_DestroyTexture( background );
-    background = NULL;
 
     graphics.quit();
     return 0;
-
 }
+
