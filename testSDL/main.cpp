@@ -1,4 +1,5 @@
 #include <iostream>
+#include<cmath>
 #include <SDL.h>
 #include<SDL_image.h>
 #include "defs.h"
@@ -12,9 +13,13 @@ int main(int argc, char *argv[])
 {
     Graphics graphics;
     graphics.init();
-    Mouse mouse;
+    Mallet mouse;
     mouse.x = SCREEN_WIDTH / 2;
-    mouse.y = SCREEN_HEIGHT / 2;
+    mouse.y = SCREEN_HEIGHT / 4*3;
+
+    Disk disk;
+    disk.x = SCREEN_WIDTH / 2;
+    disk.y = SCREEN_HEIGHT / 2;
 
     bool quit = false;
     SDL_Event event;
@@ -24,11 +29,10 @@ int main(int argc, char *argv[])
             if (event.type == SDL_QUIT) quit = true;
         }
         moveimage(mouse,graphics);
-
+        diskmovement(disk,mouse,graphics);
         graphics.presentScene();
         SDL_Delay(10);
     }
-
 
     graphics.quit();
     return 0;

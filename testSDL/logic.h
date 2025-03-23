@@ -1,10 +1,12 @@
 #ifndef LOGIC_H_INCLUDED
 #define LOGIC_H_INCLUDED
 
-struct Mouse {
-    int x, y;
-    int dx = 0, dy = 0;
-    int speed = INITIAL_SPEED;
+struct Mallet {
+    double x, y;
+    double dx = 0, dy = 0;
+    bool moved;
+    double speed = INITIAL_SPEED;
+    double diaspeed = speed/sqrt(2);
     void move() {
         x += dx; y += dy;
     }
@@ -21,19 +23,37 @@ struct Mouse {
         dy = 0; dx = speed;
     }
     void turnNorthEast(){
-        dy= -speed; dx=speed;
+        dy= -diaspeed; dx=diaspeed;
     }
     void turnNorthWest(){
-        dy= -speed; dx=-speed;
+        dy= -diaspeed; dx=-diaspeed;
     }
     void turnSouthEast(){
-        dy= speed; dx=speed;
+        dy= diaspeed; dx=diaspeed;
     }
     void turnSouthWest(){
-        dy= speed; dx=-speed;
+        dy= diaspeed; dx=-diaspeed;
     }
 };
 
+struct Disk{
+    double x,y;
+    double dx=0,dy=0;
+    double acceleration=0;
+    void movement(){
+        x+=dx; y+=dy;
+    }
+    void wallHit(){
+        dy=-dy;
+    }
+    void wallHitSide(){
+        dx=-dx;
+    }
+    void collision(double a,double b){
+        dx=a;
+        dy=b;
+    }
+};
 
 void renderCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {
     for (int w = 0; w < radius * 2; w++) {
@@ -47,55 +67,75 @@ void renderCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) 
     }
 }
 
-void render(const Mouse& mouse, const Graphics& graphics) {
+void render(const Mallet& mouse, const Graphics& graphics) {
     SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 0, 255); // green
     renderCircle(graphics.renderer, mouse.x, mouse.y, CIRCLE_RADIUS); // Vẽ hình tròn với bán kính 5
 }
 
-bool gameOver(const Mouse& mouse) {
+void renderDisk(const Disk& disk,const Graphics& graphics){
+    SDL_SetRenderDrawColor(graphics.renderer, 255, 0, 0, 255); // green
+    renderCircle(graphics.renderer, disk.x, disk.y, CIRCLE_RADIUS);
+}
+
+bool gameOver(const Mallet& mouse) {
     return (mouse.x-CIRCLE_RADIUS) < 0 || mouse.x+CIRCLE_RADIUS >= SCREEN_WIDTH ||
            mouse.y-CIRCLE_RADIUS < 0 || mouse.y+CIRCLE_RADIUS >= SCREEN_HEIGHT;
 }
-void moveimage(Mouse &mouse,Graphics &graphics){
+
+void diskmovement(Disk& disk,const Mallet& mallet,Graphics& graphics){
+    if (pow(mallet.x-disk.x,2)+pow(mallet.y-disk.y,2)<=4*CIRCLE_RADIUS*CIRCLE_RADIUS){
+        if (mallet.moved)disk.collision(mallet.dx,mallet.dy);
+    }
+    if (disk.x+CIRCLE_RADIUS>=SCREEN_WIDTH-1||disk.x-CIRCLE_RADIUS<=0){
+        disk.wallHitSide();
+    }
+    if (disk.y+CIRCLE_RADIUS>=SCREEN_HEIGHT-1||disk.y-CIRCLE_RADIUS<=0){
+        disk.wallHit();
+    }
+    disk.movement();
+    renderDisk(disk,graphics);
+}
+
+void moveimage(Mallet &mouse,Graphics &graphics){
         const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
-        bool moved=false;
+        mouse.moved=false;
         if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
             mouse.turnNorthEast();
-            moved = true;
+            mouse.moved = true;
         }
 
         else if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_LEFT]) {
             mouse.turnNorthWest();
-            moved = true;
+            mouse.moved = true;
         }
 
         else if (currentKeyStates[SDL_SCANCODE_DOWN] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
             mouse.turnSouthEast();
-            moved = true;
+            mouse.moved = true;
         }
 
         else if (currentKeyStates[SDL_SCANCODE_DOWN] && currentKeyStates[SDL_SCANCODE_LEFT]) {
             mouse.turnSouthWest();
-            moved = true;
+            mouse.moved = true;
         }
 
         else if (currentKeyStates[SDL_SCANCODE_UP]) {
             mouse.turnNorth();
-            moved = true;
+            mouse.moved = true;
         }
         else if (currentKeyStates[SDL_SCANCODE_DOWN]) {
             mouse.turnSouth();
-            moved = true;
+            mouse.moved = true;
         }
         else if (currentKeyStates[SDL_SCANCODE_LEFT]) {
             mouse.turnWest();
-            moved = true;
+            mouse.moved = true;
         }
         else if (currentKeyStates[SDL_SCANCODE_RIGHT]) {
             mouse.turnEast();
-            moved = true;
+            mouse.moved = true;
         }
-        if (moved){
+        if (mouse.moved){
             mouse.move();
         }
         render(mouse, graphics);

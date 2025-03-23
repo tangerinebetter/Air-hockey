@@ -8,17 +8,22 @@
 	<SDL.h>
 	<SDL_image.h>
 
-1742135804 source:d:\game\air-hockey\testsdl\main.cpp
+1742139887 source:d:\game\air-hockey\testsdl\main.cpp
 	<iostream>
 	<SDL.h>
 	<SDL_image.h>
 	"defs.h"
 	"graphics.h"
-	"game.h"
+	"logic.h"
 
-1741617882 d:\game\air-hockey\testsdl\defs.h
+1742359234 d:\game\air-hockey\testsdl\defs.h
 
-1741617974 d:\game\air-hockey\testsdl\graphics.h
+1742139887 d:\game\air-hockey\testsdl\graphics.h
+	<SDL.h>
+	<SDL_image.h>
+	"defs.h"
 
 1741617868 d:\game\air-hockey\testsdl\game.h
+
+1742547416 d:\game\air-hockey\testsdl\logic.h
 
