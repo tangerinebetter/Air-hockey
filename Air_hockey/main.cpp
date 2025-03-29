@@ -1,19 +1,21 @@
 #include <iostream>
+#include<bits/stdc++.h>
 #include<cmath>
+#include <algorithm>
 #include <SDL.h>
 #include<SDL_image.h>
 #include "defs.h"
 #include "graphics.h"
 #include "logic.h"
 using namespace std;
-
+using namespace std::chrono;
 
 
 int main(int argc, char *argv[])
 {
     Graphics graphics;
     graphics.init();
-    Mallet mouse;
+    Bat mouse;
     mouse.x = SCREEN_WIDTH / 2;
     mouse.y = SCREEN_HEIGHT / 4*3;
 

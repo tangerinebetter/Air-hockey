@@ -1,10 +1,10 @@
 #ifndef LOGIC_H_INCLUDED
 #define LOGIC_H_INCLUDED
 
-struct Mallet {
+struct Bat {
     double x, y;
     double dx = 0, dy = 0;
-    bool moved;
+    bool moved=false;
     double speed = INITIAL_SPEED;
     double diaspeed = speed/sqrt(2);
     void move() {
@@ -41,8 +41,9 @@ struct Disk{
     double dx=0,dy=0;
     double decceleration=0.99;
     void movement(){
-        x+=dx; y+=dy;
+        x+=dx;y+=dy;
         dx*=decceleration;dy*=decceleration;
+
     }
     void wallHit(){
         dy=-dy;
@@ -50,9 +51,19 @@ struct Disk{
     void wallHitSide(){
         dx=-dx;
     }
-    void collision(double a,double b){
-        dx=a;
-        dy=b;
+    void collision(const Bat& bat){
+        double hyp=hypot(bat.x-x,bat.y-y);
+        double sin=(bat.y-y)/hyp;
+        double cos=(bat.x-x)/hyp;
+        double nspeed = dx*cos - dy*sin;
+        double tspeed = dx*sin + dy*cos;
+        nspeed=-nspeed;
+        dx = tspeed * sin + nspeed * cos + bat.dx;
+        dy = tspeed * cos - nspeed * sin + bat.dy;
+        while(MAX_DISK_SPEED*MAX_DISK_SPEED<dx*dx+dy*dy){
+            dx*=0.98;
+            dy*=0.98;
+        }
     }
 };
 
@@ -68,24 +79,24 @@ void renderCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) 
     }
 }
 
-void render(const Mallet& mouse, const Graphics& graphics) {
-    SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 0, 255); // green
-    renderCircle(graphics.renderer, mouse.x, mouse.y, CIRCLE_RADIUS); // Vẽ hình tròn với bán kính 5
+void render(const Bat& bat, const Graphics& graphics) {
+    SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 0, 255);
+    renderCircle(graphics.renderer, bat.x, bat.y, CIRCLE_RADIUS);
 }
 
 void renderDisk(const Disk& disk,const Graphics& graphics){
-    SDL_SetRenderDrawColor(graphics.renderer, 255, 0, 0, 255); // green
+    SDL_SetRenderDrawColor(graphics.renderer, 255, 0, 0, 255);
     renderCircle(graphics.renderer, disk.x, disk.y, CIRCLE_RADIUS);
 }
 
-bool gameOver(const Mallet& mouse) {
-    return (mouse.x-CIRCLE_RADIUS) < 0 || mouse.x+CIRCLE_RADIUS >= SCREEN_WIDTH ||
-           mouse.y-CIRCLE_RADIUS < 0 || mouse.y+CIRCLE_RADIUS >= SCREEN_HEIGHT;
+bool gameOver(const Bat& bat) {
+    return (bat.x-CIRCLE_RADIUS) < 0 || bat.x+CIRCLE_RADIUS >= SCREEN_WIDTH ||
+           bat.y-CIRCLE_RADIUS < 0 || bat.y+CIRCLE_RADIUS >= SCREEN_HEIGHT;
 }
 
-void diskmovement(Disk& disk,const Mallet& mallet,Graphics& graphics){
-    if (pow(mallet.x-disk.x,2)+pow(mallet.y-disk.y,2)<=4*CIRCLE_RADIUS*CIRCLE_RADIUS){
-        if (mallet.moved)disk.collision(mallet.dx,mallet.dy);
+void diskmovement(Disk& disk,const Bat& bat,Graphics& graphics){
+    if (pow(bat.x-disk.x,2)+pow(bat.y-disk.y,2)<=4*CIRCLE_RADIUS*CIRCLE_RADIUS){
+        disk.collision(bat);
     }
     if (disk.x+CIRCLE_RADIUS>=SCREEN_WIDTH-1||disk.x-CIRCLE_RADIUS<=0){
         disk.wallHitSide();
@@ -97,48 +108,59 @@ void diskmovement(Disk& disk,const Mallet& mallet,Graphics& graphics){
     renderDisk(disk,graphics);
 }
 
-void moveimage(Mallet &mouse,Graphics &graphics){
+void moveimage(Bat &bat,Graphics &graphics){
         const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
-        mouse.moved=false;
+        bat.moved=false;
+        if (currentKeyStates[SDL_SCANCODE_LSHIFT]){
+            bat.speed = INITIAL_SPEED*2;
+        }
+        else {
+            bat.speed = INITIAL_SPEED;
+        }
         if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
-            mouse.turnNorthEast();
-            mouse.moved = true;
+            bat.turnNorthEast();
+            bat.moved = true;
         }
 
         else if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_LEFT]) {
-            mouse.turnNorthWest();
-            mouse.moved = true;
+            bat.turnNorthWest();
+            bat.moved = true;
         }
 
         else if (currentKeyStates[SDL_SCANCODE_DOWN] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
-            mouse.turnSouthEast();
-            mouse.moved = true;
+            bat.turnSouthEast();
+            bat.moved = true;
         }
 
         else if (currentKeyStates[SDL_SCANCODE_DOWN] && currentKeyStates[SDL_SCANCODE_LEFT]) {
-            mouse.turnSouthWest();
-            mouse.moved = true;
+            bat.turnSouthWest();
+            bat.moved = true;
         }
 
         else if (currentKeyStates[SDL_SCANCODE_UP]) {
-            mouse.turnNorth();
-            mouse.moved = true;
+            bat.turnNorth();
+            bat.moved = true;
         }
         else if (currentKeyStates[SDL_SCANCODE_DOWN]) {
-            mouse.turnSouth();
-            mouse.moved = true;
+            bat.turnSouth();
+            bat.moved = true;
         }
         else if (currentKeyStates[SDL_SCANCODE_LEFT]) {
-            mouse.turnWest();
-            mouse.moved = true;
+            bat.turnWest();
+            bat.moved = true;
         }
         else if (currentKeyStates[SDL_SCANCODE_RIGHT]) {
-            mouse.turnEast();
-            mouse.moved = true;
+            bat.turnEast();
+            bat.moved = true;
         }
-        if (mouse.moved){
-            mouse.move();
+        if (bat.moved){
+            bat.move();
         }
-        render(mouse, graphics);
+        /*else if (!bat.moved){
+            SDL_Delay(100);
+            bat.dx=0;
+            bat.dy=0;
+        }*/
+        render(bat, graphics);
 }
 #endif // LOGIC_H_INCLUDED
