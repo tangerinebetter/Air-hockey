@@ -39,9 +39,10 @@ struct Mallet {
 struct Disk{
     double x,y;
     double dx=0,dy=0;
-    double acceleration=0;
+    double decceleration=0.99;
     void movement(){
         x+=dx; y+=dy;
+        dx*=decceleration;dy*=decceleration;
     }
     void wallHit(){
         dy=-dy;
