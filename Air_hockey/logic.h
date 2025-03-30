@@ -1,12 +1,24 @@
 #ifndef LOGIC_H_INCLUDED
 #define LOGIC_H_INCLUDED
 
+void renderCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {
+    for (int w = 0; w < radius * 2; w++) {
+        for (int h = 0; h < radius * 2; h++) {
+            int dx = radius - w;
+            int dy = radius - h;
+            if ((dx * dx + dy * dy) <= (radius * radius)) {
+                SDL_RenderDrawPoint(renderer, centerX + dx, centerY + dy);
+            }
+        }
+    }
+}
+
 struct Bat {
     double x, y;
     double dx = 0, dy = 0;
     bool moved=false;
-    double speed = INITIAL_SPEED;
-    double diaspeed = speed/sqrt(2);
+    double speed = NORMAL_SPEED;
+    double diagonalSpeed = speed/sqrt(2);
     void move() {
         x += dx; y += dy;
     }
@@ -23,16 +35,29 @@ struct Bat {
         dy = 0; dx = speed;
     }
     void turnNorthEast(){
-        dy= -diaspeed; dx=diaspeed;
+        dy= -diagonalSpeed; dx=diagonalSpeed;
     }
     void turnNorthWest(){
-        dy= -diaspeed; dx=-diaspeed;
+        dy= -diagonalSpeed; dx=-diagonalSpeed;
     }
     void turnSouthEast(){
-        dy= diaspeed; dx=diaspeed;
+        dy= diagonalSpeed; dx=diagonalSpeed;
     }
     void turnSouthWest(){
-        dy= diaspeed; dx=-diaspeed;
+        dy= diagonalSpeed; dx=-diagonalSpeed;
+    }
+    void stayStill(){
+        dx = 0 ;dy = 0;
+    }
+    void playRange() {
+        if (x - BAT_RADIUS < 0) x = BAT_RADIUS;
+        if (x + BAT_RADIUS > SCREEN_WIDTH - 1) x = SCREEN_WIDTH - BAT_RADIUS;
+        if (y - BAT_RADIUS < SCREEN_HEIGHT / 2 - 1) y = SCREEN_HEIGHT / 2 - 1 + BAT_RADIUS;
+        if (y + BAT_RADIUS > SCREEN_HEIGHT - 1) y = SCREEN_HEIGHT - 1 - BAT_RADIUS;
+    }
+    void renderBat(const Graphics& graphics) {
+        SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 0, 255);
+        renderCircle(graphics.renderer, x, y, BAT_RADIUS);
     }
 };
 
@@ -40,10 +65,9 @@ struct Disk{
     double x,y;
     double dx=0,dy=0;
     double decceleration=0.99;
-    void movement(){
-        x+=dx;y+=dy;
-        dx*=decceleration;dy*=decceleration;
-
+    void renderDisk(const Graphics& graphics){
+        SDL_SetRenderDrawColor(graphics.renderer, 255, 0, 0, 255);
+        renderCircle(graphics.renderer, x, y, DISK_RADIUS);
     }
     void wallHit(){
         dy=-dy;
@@ -65,58 +89,43 @@ struct Disk{
             dy*=0.98;
         }
     }
+    void movement(const Bat&bat,const Graphics& graphics){
+        if (pow(bat.x-x,2)+pow(bat.y-y,2)<=4*BAT_RADIUS*DISK_RADIUS+2){
+            collision(bat);
+        }
+        if (x+DISK_RADIUS>=SCREEN_WIDTH-2||x-DISK_RADIUS<=2){
+            wallHitSide();
+        }
+        if (y+DISK_RADIUS>=SCREEN_HEIGHT-2||y-DISK_RADIUS<=2){
+            wallHit();
+        }
+        x+=dx;y+=dy;
+        dx*=decceleration;dy*=decceleration;
+        if (abs(dx)<0.2 && abs(dy)<0.2){
+            dx = 0;
+            dy = 0;
+        }
+        renderDisk(graphics);
+    }
 };
 
-void renderCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {
-    for (int w = 0; w < radius * 2; w++) {
-        for (int h = 0; h < radius * 2; h++) {
-            int dx = radius - w;
-            int dy = radius - h;
-            if ((dx * dx + dy * dy) <= (radius * radius)) {
-                SDL_RenderDrawPoint(renderer, centerX + dx, centerY + dy);
-            }
-        }
-    }
-}
+struct Bot{
+    double x, y;
+    double dx = 0, dy = 0;
+    bool moved=false;
+    double speed = NORMAL_SPEED;
+    double diagonalSpeed = speed/sqrt(2);
+};
 
-void render(const Bat& bat, const Graphics& graphics) {
-    SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 0, 255);
-    renderCircle(graphics.renderer, bat.x, bat.y, CIRCLE_RADIUS);
-}
-
-void renderDisk(const Disk& disk,const Graphics& graphics){
-    SDL_SetRenderDrawColor(graphics.renderer, 255, 0, 0, 255);
-    renderCircle(graphics.renderer, disk.x, disk.y, CIRCLE_RADIUS);
-}
-
-bool gameOver(const Bat& bat) {
-    return (bat.x-CIRCLE_RADIUS) < 0 || bat.x+CIRCLE_RADIUS >= SCREEN_WIDTH ||
-           bat.y-CIRCLE_RADIUS < 0 || bat.y+CIRCLE_RADIUS >= SCREEN_HEIGHT;
-}
-
-void diskmovement(Disk& disk,const Bat& bat,Graphics& graphics){
-    if (pow(bat.x-disk.x,2)+pow(bat.y-disk.y,2)<=4*CIRCLE_RADIUS*CIRCLE_RADIUS){
-        disk.collision(bat);
-    }
-    if (disk.x+CIRCLE_RADIUS>=SCREEN_WIDTH-1||disk.x-CIRCLE_RADIUS<=0){
-        disk.wallHitSide();
-    }
-    if (disk.y+CIRCLE_RADIUS>=SCREEN_HEIGHT-1||disk.y-CIRCLE_RADIUS<=0){
-        disk.wallHit();
-    }
-    disk.movement();
-    renderDisk(disk,graphics);
-}
-
-void moveimage(Bat &bat,Graphics &graphics){
+void moveimage(Bat &bat,const Graphics &graphics){
         const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
         bat.moved=false;
-        if (currentKeyStates[SDL_SCANCODE_LSHIFT]){
+        /*if (currentKeyStates[SDL_SCANCODE_LSHIFT]){
             bat.speed = INITIAL_SPEED*2;
         }
         else {
             bat.speed = INITIAL_SPEED;
-        }
+        } demo nut shift*/
         if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
             bat.turnNorthEast();
             bat.moved = true;
@@ -156,11 +165,10 @@ void moveimage(Bat &bat,Graphics &graphics){
         if (bat.moved){
             bat.move();
         }
-        /*else if (!bat.moved){
-            SDL_Delay(100);
-            bat.dx=0;
-            bat.dy=0;
-        }*/
-        render(bat, graphics);
+        else if (!bat.moved){
+            bat.stayStill();
+        }
+        bat.playRange();
+        bat.renderBat(graphics);
 }
 #endif // LOGIC_H_INCLUDED
