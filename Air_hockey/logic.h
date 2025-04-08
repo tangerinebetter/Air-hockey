@@ -59,6 +59,60 @@ struct Bat {
         SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 0, 255);
         renderCircle(graphics.renderer, x, y, BAT_RADIUS);
     }
+    void moveimage(const Graphics &graphics){
+        const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
+        moved=false;
+        /*if (currentKeyStates[SDL_SCANCODE_LSHIFT]){
+            speed = INITIAL_SPEED*2;
+        }
+        else {
+            speed = INITIAL_SPEED;
+        } demo nut shift*/
+        if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
+            turnNorthEast();
+            moved = true;
+        }
+
+        else if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_LEFT]) {
+            turnNorthWest();
+            moved = true;
+        }
+
+        else if (currentKeyStates[SDL_SCANCODE_DOWN] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
+            turnSouthEast();
+            moved = true;
+        }
+
+        else if (currentKeyStates[SDL_SCANCODE_DOWN] && currentKeyStates[SDL_SCANCODE_LEFT]) {
+            turnSouthWest();
+            moved = true;
+        }
+
+        else if (currentKeyStates[SDL_SCANCODE_UP]) {
+            turnNorth();
+            moved = true;
+        }
+        else if (currentKeyStates[SDL_SCANCODE_DOWN]) {
+            turnSouth();
+            moved = true;
+        }
+        else if (currentKeyStates[SDL_SCANCODE_LEFT]) {
+            turnWest();
+            moved = true;
+        }
+        else if (currentKeyStates[SDL_SCANCODE_RIGHT]) {
+            turnEast();
+            moved = true;
+        }
+        if (moved){
+            move();
+        }
+        else if (!moved){
+            stayStill();
+        }
+        playRange();
+        renderBat(graphics);
+    }
 };
 
 struct Disk{
@@ -117,58 +171,36 @@ struct Bot{
     double diagonalSpeed = speed/sqrt(2);
 };
 
-void moveimage(Bat &bat,const Graphics &graphics){
-        const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
-        bat.moved=false;
-        /*if (currentKeyStates[SDL_SCANCODE_LSHIFT]){
-            bat.speed = INITIAL_SPEED*2;
+struct Game{
+    Graphics graphics;
+    Bat bat;
+    Disk disk;
+    Bot bot;
+    void initial_pos(){
+        bat.x = START_POS_PLAYER_X;
+        bat.y = START_POS_PLAYER_Y;
+        disk.x = START_POS_DISK_X;
+        disk.y = START_POS_DISK_Y;
+    }
+    void game_start(){
+        graphics.init();
+        initial_pos();
+        bool quit = false;
+        SDL_Event event;
+        while (!quit) {
+            graphics.prepareScene();
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) quit = true;
+            }
+            SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 255, 255);
+            SDL_RenderDrawLine(graphics.renderer,0,SCREEN_HEIGHT/2,SCREEN_WIDTH,SCREEN_HEIGHT/2);
+            bat.moveimage(graphics);
+            disk.movement(bat,graphics);
+            graphics.presentScene();
+            SDL_Delay(10);
         }
-        else {
-            bat.speed = INITIAL_SPEED;
-        } demo nut shift*/
-        if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
-            bat.turnNorthEast();
-            bat.moved = true;
-        }
+        graphics.quit();
+    }
+};
 
-        else if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_LEFT]) {
-            bat.turnNorthWest();
-            bat.moved = true;
-        }
-
-        else if (currentKeyStates[SDL_SCANCODE_DOWN] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
-            bat.turnSouthEast();
-            bat.moved = true;
-        }
-
-        else if (currentKeyStates[SDL_SCANCODE_DOWN] && currentKeyStates[SDL_SCANCODE_LEFT]) {
-            bat.turnSouthWest();
-            bat.moved = true;
-        }
-
-        else if (currentKeyStates[SDL_SCANCODE_UP]) {
-            bat.turnNorth();
-            bat.moved = true;
-        }
-        else if (currentKeyStates[SDL_SCANCODE_DOWN]) {
-            bat.turnSouth();
-            bat.moved = true;
-        }
-        else if (currentKeyStates[SDL_SCANCODE_LEFT]) {
-            bat.turnWest();
-            bat.moved = true;
-        }
-        else if (currentKeyStates[SDL_SCANCODE_RIGHT]) {
-            bat.turnEast();
-            bat.moved = true;
-        }
-        if (bat.moved){
-            bat.move();
-        }
-        else if (!bat.moved){
-            bat.stayStill();
-        }
-        bat.playRange();
-        bat.renderBat(graphics);
-}
 #endif // LOGIC_H_INCLUDED
