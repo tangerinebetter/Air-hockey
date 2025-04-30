@@ -27,24 +27,27 @@
 
 1742547416 d:\game\air-hockey\testsdl\logic.h
 
-1743356375 source:d:\game\air-hockey\air_hockey\main.cpp
+1746019933 source:d:\game\air-hockey\air_hockey\main.cpp
 	<iostream>
-	<bits/stdc++.h>
 	<cmath>
 	<algorithm>
-	<chrono>
 	<SDL.h>
 	<SDL_image.h>
+	<SDL_mixer.h>
 	"defs.h"
 	"graphics.h"
 	"logic.h"
+	"game.h"
 
-1743356375 d:\game\air-hockey\air_hockey\defs.h
+1746019933 d:\game\air-hockey\air_hockey\defs.h
 
-1742139887 d:\game\air-hockey\air_hockey\graphics.h
+1746019933 d:\game\air-hockey\air_hockey\graphics.h
 	<SDL.h>
 	<SDL_image.h>
 	"defs.h"
+	<SDL_mixer.h>
 
-1743737619 d:\game\air-hockey\air_hockey\logic.h
+1746019933 d:\game\air-hockey\air_hockey\logic.h
+
+1746019933 d:\game\air-hockey\air_hockey\game.h
 

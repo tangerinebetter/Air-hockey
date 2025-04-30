@@ -11,7 +11,7 @@ void renderCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) 
             }
         }
     }
-}
+}//tam
 
 struct Bat {
     double x, y;
@@ -19,6 +19,7 @@ struct Bat {
     bool moved=false;
     double speed = NORMAL_SPEED;
     double diagonalSpeed = speed/sqrt(2);
+
     void move() {
         x += dx; y += dy;
     }
@@ -35,23 +36,23 @@ struct Bat {
         dy = 0; dx = speed;
     }
     void turnNorthEast(){
-        dy= -diagonalSpeed; dx=diagonalSpeed;
+        dy = -diagonalSpeed; dx = diagonalSpeed;
     }
     void turnNorthWest(){
-        dy= -diagonalSpeed; dx=-diagonalSpeed;
+        dy = -diagonalSpeed; dx = -diagonalSpeed;
     }
     void turnSouthEast(){
-        dy= diagonalSpeed; dx=diagonalSpeed;
+        dy = diagonalSpeed; dx = diagonalSpeed;
     }
     void turnSouthWest(){
-        dy= diagonalSpeed; dx=-diagonalSpeed;
+        dy = diagonalSpeed; dx = -diagonalSpeed;
     }
     void stayStill(){
         dx = 0 ;dy = 0;
     }
     void playRange() {
         if (x - BAT_RADIUS < 0) x = BAT_RADIUS;
-        if (x + BAT_RADIUS > SCREEN_WIDTH - 1) x = SCREEN_WIDTH - BAT_RADIUS;
+        if (x + BAT_RADIUS > BOARD_WIDTH - 1) x = BOARD_WIDTH - BAT_RADIUS;
         if (y - BAT_RADIUS < SCREEN_HEIGHT / 2 - 1) y = SCREEN_HEIGHT / 2 - 1 + BAT_RADIUS;
         if (y + BAT_RADIUS > SCREEN_HEIGHT - 1) y = SCREEN_HEIGHT - 1 - BAT_RADIUS;
     }
@@ -59,7 +60,7 @@ struct Bat {
         SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 0, 255);
         renderCircle(graphics.renderer, x, y, BAT_RADIUS);
     }
-    void moveimage(const Graphics &graphics){
+    void batMove(const Graphics &graphics){
         const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
         moved=false;
         /*if (currentKeyStates[SDL_SCANCODE_LSHIFT]){
@@ -115,47 +116,113 @@ struct Bat {
     }
 };
 
+struct Bot{
+    double x, y;
+    double dx = 0, dy = 0;
+    double speed = NORMAL_SPEED;
+    double diagonalSpeed = speed/sqrt(2);
+
+    void renderBot(const Graphics& graphics) {
+        SDL_SetRenderDrawColor(graphics.renderer, 0, 0, 255, 255);
+        renderCircle(graphics.renderer, x, y, BAT_RADIUS);
+    }
+    void botRange() {
+        if (x - BAT_RADIUS < 0) x = BAT_RADIUS;
+        if (x + BAT_RADIUS > BOARD_WIDTH - 1) x = BOARD_WIDTH - BAT_RADIUS;
+        if (y - BAT_RADIUS > SCREEN_HEIGHT / 2 - 1) y = SCREEN_HEIGHT / 2 - 1 - BAT_RADIUS;
+        if (y - BAT_RADIUS < - 1) y = 0 + 1 + BAT_RADIUS;
+    }
+};
 struct Disk{
+    bool player_win = 0;
+    bool bot_win = 0;
     double x,y;
-    double dx=0,dy=0;
-    double decceleration=0.99;
+    double dx = 0, dy = 0;
+    double decceleration = 0.99;
     void renderDisk(const Graphics& graphics){
         SDL_SetRenderDrawColor(graphics.renderer, 255, 0, 0, 255);
         renderCircle(graphics.renderer, x, y, DISK_RADIUS);
     }
     void wallHit(){
-        dy=-dy;
+        if (y - DISK_RADIUS <= 0){
+            y = DISK_RADIUS;
+        }
+        else if (y + DISK_RADIUS >= SCREEN_HEIGHT){
+            y = SCREEN_HEIGHT - DISK_RADIUS;
+        }
+        dy = -dy;
     }
     void wallHitSide(){
-        dx=-dx;
+        if (x - DISK_RADIUS <= 0){
+            x = DISK_RADIUS;
+        }
+        else if (x + DISK_RADIUS >= BOARD_WIDTH){
+            x = BOARD_WIDTH - DISK_RADIUS;
+        }
+        dx = -dx;
     }
     void collision(const Bat& bat){
-        double hyp=hypot(bat.x-x,bat.y-y);
-        double sin=(bat.y-y)/hyp;
-        double cos=(bat.x-x)/hyp;
+        double hyp = hypot(bat.x - x, bat.y - y);
+        double sin = (bat.y - y) / hyp;
+        double cos = (bat.x - x) / hyp;
         double nspeed = dx*cos - dy*sin;
         double tspeed = dx*sin + dy*cos;
-        nspeed=-nspeed;
-        dx = tspeed * sin + nspeed * cos + bat.dx;
-        dy = tspeed * cos - nspeed * sin + bat.dy;
-        while(MAX_DISK_SPEED*MAX_DISK_SPEED<dx*dx+dy*dy){
-            dx*=0.98;
-            dy*=0.98;
+        dx = tspeed * sin - nspeed * cos + bat.dx;
+        dy = tspeed * cos + nspeed * sin + bat.dy;
+        while(MAX_DISK_SPEED * MAX_DISK_SPEED < dx*dx + dy*dy){
+            dx *= decceleration;
+            dy *= decceleration;
+        }
+        double overlap = DISK_RADIUS + BAT_RADIUS - hyp;
+        if (overlap > 0) {
+            x -= overlap * cos;
+            y -= overlap * sin;
         }
     }
-    void movement(const Bat&bat,const Graphics& graphics){
-        if (pow(bat.x-x,2)+pow(bat.y-y,2)<=4*BAT_RADIUS*DISK_RADIUS+2){
+    void bot_collision(const Bot& bot){
+        double hyp = hypot(bot.x - x, bot.y - y);
+        double sin = (bot.y - y) / hyp;
+        double cos = (bot.x - x) / hyp;
+        double nspeed = dx*cos - dy*sin;
+        double tspeed = dx*sin + dy*cos;
+        dx = tspeed * sin - nspeed * cos + bot.dx;
+        dy = tspeed * cos + nspeed * sin + bot.dy;
+        while(MAX_DISK_SPEED * MAX_DISK_SPEED < dx*dx + dy*dy){
+            dx *= decceleration;
+            dy *= decceleration;
+        }
+        double overlap = DISK_RADIUS + BAT_RADIUS - hyp;
+        if (overlap > 0) {
+            x -= overlap * cos;
+            y -= overlap * sin;
+        }
+    }
+    void movement(const Bat& bat,const Bot& bot,const Graphics& graphics){
+        if (pow(bat.x - x, 2)+pow(bat.y - y, 2) <= 4 * BAT_RADIUS * DISK_RADIUS + 2){
             collision(bat);
         }
-        if (x+DISK_RADIUS>=SCREEN_WIDTH-2||x-DISK_RADIUS<=2){
+        if (pow(bot.x - x, 2)+pow(bot.y - y, 2) <= 4 * BAT_RADIUS * DISK_RADIUS + 2){
+            bot_collision(bot);
+        }
+        if (x + DISK_RADIUS >= BOARD_WIDTH - 2 || x - DISK_RADIUS <= 2){
             wallHitSide();
         }
-        if (y+DISK_RADIUS>=SCREEN_HEIGHT-2||y-DISK_RADIUS<=2){
+        if (y + DISK_RADIUS >= SCREEN_HEIGHT - 2 && x + DISK_RADIUS >= GOAL_X1 && x - DISK_RADIUS <= GOAL_X2 ){
+            player_win = 1;
+            return;
+        }
+        if (y - DISK_RADIUS <= 2 && x + DISK_RADIUS >= GOAL_X1 && x - DISK_RADIUS <= GOAL_X2 ){
+            bot_win = 1;
+            return;
+        }
+        if (y + DISK_RADIUS >= SCREEN_HEIGHT - 2 || y - DISK_RADIUS <= 2){
             wallHit();
         }
-        x+=dx;y+=dy;
-        dx*=decceleration;dy*=decceleration;
-        if (abs(dx)<0.2 && abs(dy)<0.2){
+        x += dx;
+        y += dy;
+        dx *= decceleration;
+        dy *= decceleration;
+        if (abs(dx) < MINIMUM_DISK_SPEED && abs(dy) < MINIMUM_DISK_SPEED){
             dx = 0;
             dy = 0;
         }
@@ -163,44 +230,33 @@ struct Disk{
     }
 };
 
-struct Bot{
-    double x, y;
-    double dx = 0, dy = 0;
-    bool moved=false;
-    double speed = NORMAL_SPEED;
-    double diagonalSpeed = speed/sqrt(2);
-};
-
-struct Game{
-    Graphics graphics;
-    Bat bat;
-    Disk disk;
-    Bot bot;
-    void initial_pos(){
-        bat.x = START_POS_PLAYER_X;
-        bat.y = START_POS_PLAYER_Y;
-        disk.x = START_POS_DISK_X;
-        disk.y = START_POS_DISK_Y;
-    }
-    void game_start(){
-        graphics.init();
-        initial_pos();
-        bool quit = false;
-        SDL_Event event;
-        while (!quit) {
-            graphics.prepareScene();
-            while (SDL_PollEvent(&event)) {
-                if (event.type == SDL_QUIT) quit = true;
-            }
-            SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 255, 255);
-            SDL_RenderDrawLine(graphics.renderer,0,SCREEN_HEIGHT/2,SCREEN_WIDTH,SCREEN_HEIGHT/2);
-            bat.moveimage(graphics);
-            disk.movement(bat,graphics);
-            graphics.presentScene();
-            SDL_Delay(10);
+void behavior(Bot& bot,const Disk& disk,const Graphics& graphics){
+        double predictX = disk.x + disk.dx;
+        double predictY = disk.y + disk.dy;
+        double distanceX = abs(predictX - bot.x);
+        double distanceY = predictY - bot.y;
+        bot.dx = (bot.speed < distanceX ? bot.speed : distanceX) * (predictX < bot.x ? -1 : 1);
+        if (predictY > SCREEN_HEIGHT / 2){
+            bot.dy -= (bot.y - bot.speed > MAX_DISK_SPEED ? bot.speed : 0);
         }
-        graphics.quit();
+        else if (predictY < bot.y + BAT_RADIUS / 2){
+            bot.dy = -bot.speed;
+        }
+        else if (distanceY > distanceX || bot.speed > distanceX - DISK_RADIUS / 2){
+            bot.dy = (bot.speed < distanceY ? bot.speed : distanceY);
+        }
+        else {
+            bot.dy = distanceY / (distanceX / bot.speed);
+        }
+        //speed *= speed;
+        while (bot.speed*bot.speed < bot.dx*bot.dx + bot.dy*bot.dy){
+            bot.dx *= 0.9;
+            bot.dy *= 0.9;
+        }
+        bot.x += bot.dx;
+        bot.y += bot.dy;
+        bot.botRange();
+        bot.renderBot(graphics);
     }
-};
 
 #endif // LOGIC_H_INCLUDED
