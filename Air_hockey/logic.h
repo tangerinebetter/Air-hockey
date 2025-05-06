@@ -139,9 +139,15 @@ struct Disk{
     double x,y;
     double dx = 0, dy = 0;
     double decceleration = 0.99;
-    void renderDisk(const Graphics& graphics){
+    /*void renderDisk(const Graphics& graphics){
         SDL_SetRenderDrawColor(graphics.renderer, 255, 0, 0, 255);
         renderCircle(graphics.renderer, x, y, DISK_RADIUS);
+    }*/
+    void renderDisk(Graphics& graphics){
+        SDL_Texture* disk_image = graphics.loadTexture("pixil-frame-0 (1).png");
+        graphics.renderTexture(disk_image, x-DISK_RADIUS, y-DISK_RADIUS, 40,40);
+        SDL_DestroyTexture(disk_image);
+        disk_image = NULL;
     }
     void wallHit(){
         if (y - DISK_RADIUS <= 0){
@@ -197,7 +203,7 @@ struct Disk{
             y -= overlap * sin;
         }
     }
-    void movement(const Bat& bat,const Bot& bot,const Graphics& graphics){
+    void movement(const Bat& bat,const Bot& bot,Graphics& graphics){
         if (pow(bat.x - x, 2)+pow(bat.y - y, 2) <= 4 * BAT_RADIUS * DISK_RADIUS + 2){
             collision(bat);
         }
@@ -208,11 +214,11 @@ struct Disk{
             wallHitSide();
         }
         if (y + DISK_RADIUS >= SCREEN_HEIGHT - 2 && x + DISK_RADIUS >= GOAL_X1 && x - DISK_RADIUS <= GOAL_X2 ){
-            player_win = 1;
+            bot_win = 1;
             return;
         }
         if (y - DISK_RADIUS <= 2 && x + DISK_RADIUS >= GOAL_X1 && x - DISK_RADIUS <= GOAL_X2 ){
-            bot_win = 1;
+            player_win = 1;
             return;
         }
         if (y + DISK_RADIUS >= SCREEN_HEIGHT - 2 || y - DISK_RADIUS <= 2){
