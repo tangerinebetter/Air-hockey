@@ -6,8 +6,11 @@ struct Game{
     Bat bat;
     Disk disk;
     Bot bot;
+    int time_left = INITIAL_TIME;
     int player_score = 0;
     int bot_score = 0;
+    int volume = DEFAULT_VOLUME;
+    bool music_mute = 1;
     void initial_pos(){
         bat.x = START_POS_PLAYER_X;
         bat.y = START_POS_PLAYER_Y;
@@ -43,21 +46,20 @@ struct Game{
         strcpy(ps, s.c_str());
         return ps;
     }
-    void score_and_time(const double& minutes, const double& seconds){
-        TTF_Font* font = graphics.loadFont("font\\PixeloidMono-d94EV.ttf", 100);
-        SDL_Color color = {255, 255, 255, 0};
+    void score_and_time(const double& minutes, const int& seconds){
+        TTF_Font* font = graphics.loadFont("font\\PixeloidMono-d94EV.ttf", BOARD_FONT_SIZE);
 
-        SDL_Texture* pscore_screen = graphics.renderText(int_to_pchar(player_score), font, color);
-        graphics.renderTexture(pscore_screen, 500, 200);
+        SDL_Texture* pscore_screen = graphics.renderText(int_to_pchar(player_score), font, WHITE);
+        graphics.renderTexture(pscore_screen, SCORE_X, BOT_SCORE_Y);
 
-        SDL_Texture* bscore_screen = graphics.renderText(int_to_pchar(bot_score), font, color);
-        graphics.renderTexture(bscore_screen, 600, 200);
+        SDL_Texture* bscore_screen = graphics.renderText(int_to_pchar(bot_score), font, WHITE);
+        graphics.renderTexture(bscore_screen, SCORE_X, PLAYER_SCORE_Y);
 
-        double tempMin = 5 , tempSec = 0;
-        SDL_Texture* seconds_screen = graphics.renderText(int_to_pchar(int(tempSec + 60 - seconds) % 60), font, color);
-        graphics.renderTexture(seconds_screen, 600, 100);
-        SDL_Texture* minutes_screen = graphics.renderText(int_to_pchar(int(tempMin - minutes)), font, color);
-        graphics.renderTexture(minutes_screen, 500, 100);
+        double tempMin = time_left / 60.0 , tempSec = time_left % 60;
+        SDL_Texture* seconds_screen = graphics.renderText(int_to_pchar(int(tempSec + 60 - seconds) % 60), font, WHITE);
+        graphics.renderTexture(seconds_screen, SECOND_X, TIMER_Y);
+        SDL_Texture* minutes_screen = graphics.renderText(int_to_pchar(int(tempMin - minutes)), font, WHITE);
+        graphics.renderTexture(minutes_screen, MINUTE_X, TIMER_Y);
 
         SDL_DestroyTexture(pscore_screen);
         SDL_DestroyTexture(bscore_screen);
@@ -69,41 +71,97 @@ struct Game{
         bscore_screen = NULL;
         minutes_screen = NULL;
     }
+    void destroy_image(SDL_Texture** a) {
+        if (*a != NULL) {
+            SDL_DestroyTexture(*a);
+            *a = NULL;
+        }
+    }
     void menu(){
-        Mix_Music *gMusic = graphics.loadMusic("music_and_sound\\Phoenix Wright_ Trials and Tribulations OST - Investigation  Middle Stage 2004.mp3");
-        graphics.play(gMusic);
-        graphics.setMusicVolume(20);
         bool quit_menu=false;
         SDL_Event event;
+        int mouse_x , mouse_y;
+        TTF_Font* font = graphics.loadFont("font\\PixeloidMono-d94EV.ttf", MENU_TEXT_SIZE);
+        SDL_Texture* menu_background = graphics.loadTexture("image\\random.png");
+        SDL_Texture* button_image = graphics.loadTexture("image\\button.png");
+        SDL_Texture* button_image_pressed = graphics.loadTexture("image\\32x13.png");
+        SDL_Texture* play_button = graphics.renderText(PLAY_BUTTON, font, WHITE);
+        SDL_Texture* exit_button = graphics.renderText(EXIT_BUTTON, font, WHITE);
+        SDL_Texture* setting_button = graphics.renderText(SETTING_BUTTON, font, WHITE);
         while (!quit_menu) {
             graphics.prepareScene();
+            graphics.renderTexture(menu_background, 0, 0,900,900);
             while (SDL_PollEvent(&event)) {
                 if (event.type == SDL_QUIT) quit_menu = true;
             }
-            TTF_Font* font = graphics.loadFont("font\\PixeloidMono-d94EV.ttf", 100);
-            SDL_Color color = {255, 255, 255, 0};
-            SDL_Texture* play_button = graphics.renderText(PLAY_BUTTON, font, color);
-            graphics.renderTexture(play_button, 200, 200);
-            SDL_DestroyTexture(play_button);
-            TTF_CloseFont( font );
-            play_button = NULL;
-            graphics.presentScene();
-            const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
-            if (currentKeyStates[SDL_SCANCODE_UP]) {
-                game_start();
-                if (gMusic != nullptr) Mix_FreeMusic( gMusic );
-                return;
+            SDL_GetMouseState(&mouse_x, &mouse_y);
+
+            if (mouse_x >= BUTTON_X && mouse_y >=PLAY_BUTTON_WINDOW_Y && mouse_x <= BUTTON_X + MENU_BUTTON_SIZE && mouse_y <= PLAY_BUTTON_WINDOW_Y + MENU_BUTTON_SIZE_Y){
+                graphics.renderTexture(button_image_pressed, BUTTON_X, PLAY_BUTTON_WINDOW_Y, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
+                graphics.renderTexture(button_image, BUTTON_X, SETTING_BUTTON_WINDOW_Y, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
+                graphics.renderTexture(button_image, BUTTON_X, EXIT_BUTTON_WINDOW_Y, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
             }
+            else if(mouse_x >= BUTTON_X && mouse_y >=EXIT_BUTTON_WINDOW_Y && mouse_x <= BUTTON_X + MENU_BUTTON_SIZE && mouse_y <= EXIT_BUTTON_WINDOW_Y + MENU_BUTTON_SIZE_Y){
+                graphics.renderTexture(button_image, BUTTON_X, PLAY_BUTTON_WINDOW_Y, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
+                graphics.renderTexture(button_image, BUTTON_X, SETTING_BUTTON_WINDOW_Y, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
+                graphics.renderTexture(button_image_pressed, BUTTON_X, EXIT_BUTTON_WINDOW_Y, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
+            }
+            else {
+                graphics.renderTexture(button_image, BUTTON_X, PLAY_BUTTON_WINDOW_Y, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
+                graphics.renderTexture(button_image, BUTTON_X, SETTING_BUTTON_WINDOW_Y, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
+                graphics.renderTexture(button_image, BUTTON_X, EXIT_BUTTON_WINDOW_Y, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
+            }
+            graphics.renderTexture(play_button, MENU_TEXT_X, PLAY_BUTTON_Y);
+            graphics.renderTexture(setting_button, MENU_TEXT_X, SETTING_BUTTON_Y);
+            graphics.renderTexture(exit_button, MENU_TEXT_X, EXIT_BUTTON_Y);
             SDL_Delay(10);
+            graphics.presentScene();
+            SDL_PollEvent(&event);
+            switch (event.type) {
+                case SDL_QUIT:
+                    quit_menu = true;
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                    if (mouse_x >= BUTTON_X && mouse_y >=PLAY_BUTTON_WINDOW_Y && mouse_x <= BUTTON_X + MENU_BUTTON_SIZE && mouse_y <= PLAY_BUTTON_WINDOW_Y + MENU_BUTTON_SIZE_Y){
+                        destroy_image(&play_button);
+                        destroy_image(&exit_button);
+                        destroy_image(&setting_button);
+                        destroy_image(&button_image);
+                        destroy_image(&button_image_pressed);
+                        destroy_image(&menu_background);
+                        TTF_CloseFont( font );
+                        game_start();
+                        return;
+                    }
+                    if (mouse_x >= BUTTON_X && mouse_y >=EXIT_BUTTON_WINDOW_Y && mouse_x <= BUTTON_X + MENU_BUTTON_SIZE && mouse_y <= EXIT_BUTTON_WINDOW_Y + MENU_BUTTON_SIZE_Y){
+                        destroy_image(&play_button);
+                        destroy_image(&exit_button);
+                        destroy_image(&setting_button);
+                        destroy_image(&button_image);
+                        destroy_image(&button_image_pressed);
+                        destroy_image(&menu_background);
+                        TTF_CloseFont( font );
+                        return;
+                    }
+                    break;
+            }
         }
-        if (gMusic != nullptr) Mix_FreeMusic( gMusic );
+        destroy_image(&play_button);
+        destroy_image(&exit_button);
+        destroy_image(&setting_button);
+        destroy_image(&button_image);
+        destroy_image(&button_image_pressed);
+        destroy_image(&menu_background);
+        TTF_CloseFont( font );
     }
-    void game_play(){
-        graphics.init();
-        menu();
-        graphics.quit();
+    void setting(Mix_Music* gMusic){
+
     }
     void game_start(){
+        SDL_Texture* board_image = graphics.loadTexture("image\\board.png");
+        SDL_Texture* player_bat_image = graphics.loadTexture("image\\player_bat.png");
+        SDL_Texture* bot_bat_image = graphics.loadTexture("image\\bot_image.png");
+        SDL_Texture* disk_image = graphics.loadTexture("image\\disk.png");
         Uint32 startTime = SDL_GetTicks();
         initial_pos();
         disk_initial_pos();
@@ -111,19 +169,21 @@ struct Game{
         SDL_Event event;
         while (!quit) {
             graphics.prepareScene();
+            SDL_RenderCopy(graphics.renderer, board_image, NULL, NULL);
             while (SDL_PollEvent(&event)) {
                 if (event.type == SDL_QUIT) quit = true;
             }
             Uint32 currentTime = SDL_GetTicks();
             Uint32 passedTime = currentTime - startTime;
-            double minutes = (passedTime / 1000.0) / 60.0;
-            double seconds = (passedTime / 1000) % 60;
-            score_and_time(minutes,seconds);
-            SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 255, 255);//tam
-            SDL_RenderDrawLine(graphics.renderer, 0, SCREEN_HEIGHT/2, BOARD_WIDTH, SCREEN_HEIGHT/2);//tam
-            SDL_RenderDrawLine(graphics.renderer,BOARD_WIDTH,0,BOARD_WIDTH,SCREEN_HEIGHT);//tam
-            bat.batMove(graphics);
-            disk.movement(bat,bot,graphics);
+            double minutes = (passedTime / 1000) / 60.0;
+            int seconds = (passedTime / 1000) % 60;
+            score_and_time(minutes, seconds);
+            bat.batMove();
+            disk.movement(bat,bot);
+            behavior(bot,disk);
+            graphics.renderTexture(player_bat_image, bat.x - BAT_RADIUS, bat.y - BAT_RADIUS, BAT_RADIUS * 2,BAT_RADIUS * 2);
+            graphics.renderTexture(bot_bat_image, bot.x - BAT_RADIUS, bot.y - BAT_RADIUS, BAT_RADIUS * 2,BAT_RADIUS * 2);
+            graphics.renderTexture(disk_image, disk.x - DISK_RADIUS, disk.y - DISK_RADIUS, DISK_RADIUS * 2,DISK_RADIUS * 2);
             if (disk.player_win) {
                 player_won();
             }
@@ -131,15 +191,32 @@ struct Game{
                 bot_won();
             }
             if (bot_score==WIN_POINT||player_score==WIN_POINT)quit = true;
-            behavior(bot,disk,graphics);
             const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
             if (currentKeyStates[SDL_SCANCODE_ESCAPE]) {
+                time_left -= seconds;
+                destroy_image(&board_image);
+                destroy_image(&player_bat_image);
+                destroy_image(&bot_bat_image);
+                destroy_image(&disk_image);
                 menu();
                 return;
             }
             graphics.presentScene();
             SDL_Delay(10);
         }
+        destroy_image(&board_image);
+        destroy_image(&player_bat_image);
+        destroy_image(&bot_bat_image);
+        destroy_image(&disk_image   );
+    }
+    void game_play(){
+        graphics.init();
+        Mix_Music *gMusic = graphics.loadMusic("music_and_sound\\Phoenix Wright_ Trials and Tribulations OST - Investigation  Middle Stage 2004.mp3");
+        graphics.play(gMusic);
+        graphics.setMusicVolume(volume);
+        menu();
+        if (gMusic != nullptr) Mix_FreeMusic( gMusic );
+        graphics.quit();
     }
 };
 

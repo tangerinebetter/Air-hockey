@@ -56,11 +56,8 @@ struct Bat {
         if (y - BAT_RADIUS < SCREEN_HEIGHT / 2 - 1) y = SCREEN_HEIGHT / 2 - 1 + BAT_RADIUS;
         if (y + BAT_RADIUS > SCREEN_HEIGHT - 1) y = SCREEN_HEIGHT - 1 - BAT_RADIUS;
     }
-    void renderBat(const Graphics& graphics) {
-        SDL_SetRenderDrawColor(graphics.renderer, 0, 255, 0, 255);
-        renderCircle(graphics.renderer, x, y, BAT_RADIUS);
-    }
-    void batMove(const Graphics &graphics){
+
+    void batMove(){
         const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
         moved=false;
         /*if (currentKeyStates[SDL_SCANCODE_LSHIFT]){
@@ -112,7 +109,7 @@ struct Bat {
             stayStill();
         }
         playRange();
-        renderBat(graphics);
+        //renderBat(graphics);
     }
 };
 
@@ -121,11 +118,6 @@ struct Bot{
     double dx = 0, dy = 0;
     double speed = NORMAL_SPEED;
     double diagonalSpeed = speed/sqrt(2);
-
-    void renderBot(const Graphics& graphics) {
-        SDL_SetRenderDrawColor(graphics.renderer, 0, 0, 255, 255);
-        renderCircle(graphics.renderer, x, y, BAT_RADIUS);
-    }
     void botRange() {
         if (x - BAT_RADIUS < 0) x = BAT_RADIUS;
         if (x + BAT_RADIUS > BOARD_WIDTH - 1) x = BOARD_WIDTH - BAT_RADIUS;
@@ -138,17 +130,7 @@ struct Disk{
     bool bot_win = 0;
     double x,y;
     double dx = 0, dy = 0;
-    double decceleration = 0.99;
-    /*void renderDisk(const Graphics& graphics){
-        SDL_SetRenderDrawColor(graphics.renderer, 255, 0, 0, 255);
-        renderCircle(graphics.renderer, x, y, DISK_RADIUS);
-    }*/
-    void renderDisk(Graphics& graphics){
-        SDL_Texture* disk_image = graphics.loadTexture("pixil-frame-0 (1).png");
-        graphics.renderTexture(disk_image, x-DISK_RADIUS, y-DISK_RADIUS, 40,40);
-        SDL_DestroyTexture(disk_image);
-        disk_image = NULL;
-    }
+    double decceleration = DECCELERATION;
     void wallHit(){
         if (y - DISK_RADIUS <= 0){
             y = DISK_RADIUS;
@@ -203,7 +185,7 @@ struct Disk{
             y -= overlap * sin;
         }
     }
-    void movement(const Bat& bat,const Bot& bot,Graphics& graphics){
+    void movement(const Bat& bat,const Bot& bot){
         if (pow(bat.x - x, 2)+pow(bat.y - y, 2) <= 4 * BAT_RADIUS * DISK_RADIUS + 2){
             collision(bat);
         }
@@ -232,18 +214,18 @@ struct Disk{
             dx = 0;
             dy = 0;
         }
-        renderDisk(graphics);
     }
 };
 
-void behavior(Bot& bot,const Disk& disk,const Graphics& graphics){
+void behavior(Bot& bot,const Disk& disk){
         double predictX = disk.x + disk.dx;
         double predictY = disk.y + disk.dy;
         double distanceX = abs(predictX - bot.x);
         double distanceY = predictY - bot.y;
         bot.dx = (bot.speed < distanceX ? bot.speed : distanceX) * (predictX < bot.x ? -1 : 1);
         if (predictY > SCREEN_HEIGHT / 2){
-            bot.dy -= (bot.y - bot.speed > MAX_DISK_SPEED ? bot.speed : 0);
+            if (bot.y <=SCREEN_HEIGHT/5)bot.dy=0;
+            else bot.dy -= (bot.y - bot.speed > MAX_DISK_SPEED ? bot.speed : 0);
         }
         else if (predictY < bot.y + BAT_RADIUS / 2){
             bot.dy = -bot.speed;
@@ -262,7 +244,6 @@ void behavior(Bot& bot,const Disk& disk,const Graphics& graphics){
         bot.x += bot.dx;
         bot.y += bot.dy;
         bot.botRange();
-        bot.renderBot(graphics);
     }
 
 #endif // LOGIC_H_INCLUDED
