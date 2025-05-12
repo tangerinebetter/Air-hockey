@@ -1,18 +1,6 @@
 #ifndef LOGIC_H_INCLUDED
 #define LOGIC_H_INCLUDED
 
-void renderCircle(SDL_Renderer* renderer, int centerX, int centerY, int radius) {
-    for (int w = 0; w < radius * 2; w++) {
-        for (int h = 0; h < radius * 2; h++) {
-            int dx = radius - w;
-            int dy = radius - h;
-            if ((dx * dx + dy * dy) <= (radius * radius)) {
-                SDL_RenderDrawPoint(renderer, centerX + dx, centerY + dy);
-            }
-        }
-    }
-}//tam
-
 struct Bat {
     double x, y;
     double dx = 0, dy = 0;
@@ -109,14 +97,13 @@ struct Bat {
             stayStill();
         }
         playRange();
-        //renderBat(graphics);
     }
 };
 
 struct Bot{
     double x, y;
     double dx = 0, dy = 0;
-    double speed = NORMAL_SPEED;
+    double speed = NORMAL_SPEED/2;
     double diagonalSpeed = speed/sqrt(2);
     void botRange() {
         if (x - BAT_RADIUS < 0) x = BAT_RADIUS;
@@ -185,14 +172,17 @@ struct Disk{
             y -= overlap * sin;
         }
     }
-    void movement(const Bat& bat,const Bot& bot){
+    void movement(const Bat& bat,const Bot& bot,Graphics& graphics,Mix_Chunk* hit_sound){
         if (pow(bat.x - x, 2)+pow(bat.y - y, 2) <= 4 * BAT_RADIUS * DISK_RADIUS + 2){
+            graphics.play(hit_sound);
             collision(bat);
         }
         if (pow(bot.x - x, 2)+pow(bot.y - y, 2) <= 4 * BAT_RADIUS * DISK_RADIUS + 2){
+            graphics.play(hit_sound);
             bot_collision(bot);
         }
         if (x + DISK_RADIUS >= BOARD_WIDTH - 2 || x - DISK_RADIUS <= 2){
+            graphics.play(hit_sound);
             wallHitSide();
         }
         if (y + DISK_RADIUS >= SCREEN_HEIGHT - 2 && x + DISK_RADIUS >= GOAL_X1 && x - DISK_RADIUS <= GOAL_X2 ){
@@ -204,6 +194,7 @@ struct Disk{
             return;
         }
         if (y + DISK_RADIUS >= SCREEN_HEIGHT - 2 || y - DISK_RADIUS <= 2){
+            graphics.play(hit_sound);
             wallHit();
         }
         x += dx;

@@ -91,6 +91,9 @@ struct Graphics {
             Mix_PauseMusic();
         }
     }
+    void resumeMusic(){
+        Mix_ResumeMusic();
+    }
     void stopMusic() {
         Mix_HaltMusic();
     }
@@ -100,6 +103,14 @@ struct Graphics {
         } else {
             SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR,
                            "Invalid music volume: %d. Volume should be between 0 and 128.", volume);
+        }
+    }
+    void setSoundVolume(Mix_Chunk* gChunk,int volume) {
+        if (volume >= 0 && volume <= 128) {
+            Mix_VolumeChunk(gChunk,volume);
+        } else {
+            SDL_LogMessage(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_ERROR,
+                           "Invalid sound volume: %d. Volume should be between 0 and 128.", volume);
         }
     }
     void prepareScene()
