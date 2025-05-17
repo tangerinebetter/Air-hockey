@@ -10,6 +10,7 @@
 #include "graphics.h"
 #include "logic.h"
 #include "game.h"
+
 using namespace std;
 
 
@@ -19,4 +20,3 @@ int main(int argc, char *argv[])
     game.game_play();
     return 0;
 }
-

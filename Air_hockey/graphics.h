@@ -141,6 +141,7 @@ struct Graphics {
         return texture;
     }
 
+
     void renderTexture(SDL_Texture *texture, int x, int y)
     {
         SDL_Rect dest;
@@ -162,6 +163,24 @@ struct Graphics {
 
         SDL_RenderCopy(renderer, texture, NULL, &dest);
     }
+    void renderTexture(SDL_Texture *texture, int x, int y, int width, int height, Uint8 alpha) {
+        SDL_Rect dest;
+        dest.x = x;
+        dest.y = y;
+        dest.w = width;
+        dest.h = height;
+        SDL_SetTextureAlphaMod(texture, alpha);
+        SDL_RenderCopy(renderer, texture, NULL, &dest);
+    }
+    void renderTexture(SDL_Texture *texture, int x, int y, Uint8 alpha) {
+        SDL_Rect dest;
+        dest.x = x;
+        dest.y = y;
+        SDL_QueryTexture(texture, NULL, NULL, &dest.w, &dest.h);
+        SDL_SetTextureAlphaMod(texture, alpha);
+        SDL_RenderCopy(renderer, texture, NULL, &dest);
+    }
+
     TTF_Font* loadFont(const char* path, int size)
     {
         TTF_Font* gFont = TTF_OpenFont( path, size );

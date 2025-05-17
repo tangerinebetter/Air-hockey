@@ -237,4 +237,5 @@ void behavior(Bot& bot,const Disk& disk){
         bot.botRange();
     }
 
+
 #endif // LOGIC_H_INCLUDED
