@@ -209,33 +209,31 @@ struct Disk{
 };
 
 void behavior(Bot& bot,const Disk& disk){
-        double predictX = disk.x + disk.dx;
-        double predictY = disk.y + disk.dy;
-        double distanceX = abs(predictX - bot.x);
-        double distanceY = predictY - bot.y;
-        bot.dx = (bot.speed < distanceX ? bot.speed : distanceX) * (predictX < bot.x ? -1 : 1);
-        if (predictY > SCREEN_HEIGHT / 2){
-            if (bot.y <=SCREEN_HEIGHT/5)bot.dy=0;
-            else bot.dy -= (bot.y - bot.speed > MAX_DISK_SPEED ? bot.speed : 0);
-        }
-        else if (predictY < bot.y + BAT_RADIUS / 2){
-            bot.dy = -bot.speed;
-        }
-        else if (distanceY > distanceX || bot.speed > distanceX - DISK_RADIUS / 2){
-            bot.dy = (bot.speed < distanceY ? bot.speed : distanceY);
-        }
-        else {
-            bot.dy = distanceY / (distanceX / bot.speed);
-        }
-        //speed *= speed;
-        while (bot.speed*bot.speed < bot.dx*bot.dx + bot.dy*bot.dy){
-            bot.dx *= 0.9;
-            bot.dy *= 0.9;
-        }
-        bot.x += bot.dx;
-        bot.y += bot.dy;
-        bot.botRange();
+    double predictX = disk.x + disk.dx;
+    double predictY = disk.y + disk.dy;
+    double distanceX = abs(predictX - bot.x);
+    double distanceY = predictY - bot.y;
+    bot.dx = (bot.speed < distanceX ? bot.speed : distanceX) * (predictX < bot.x ? -1 : 1);
+    if (predictY > SCREEN_HEIGHT / 2){
+        bot.dy = (bot.y > SCREEN_HEIGHT/5 ? -bot.speed : 0);
     }
+    else if (predictY < bot.y + BAT_RADIUS / 2){
+        bot.dy = -bot.speed;
+    }
+    else if (distanceY > distanceX || bot.speed > distanceX ){
+        bot.dy = (bot.speed < distanceY ? bot.speed : distanceY);
+    }
+    else {
+        bot.dy = bot.speed * distanceY / distanceX;
+    }
+    while (bot.speed*bot.speed < bot.dx*bot.dx + bot.dy*bot.dy){
+        bot.dx *= 0.98;
+        bot.dy *= 0.98;
+    }
+    bot.x += bot.dx;
+    bot.y += bot.dy;
+    bot.botRange();
+}
 
 
 #endif // LOGIC_H_INCLUDED

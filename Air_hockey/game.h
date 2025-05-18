@@ -11,6 +11,8 @@ struct Game{
     int bot_score = 0;
     int music_volume = DEFAULT_VOLUME;
     int sound_volume = DEFAULT_VOLUME;
+    std::deque<int> trace_x;
+    std::deque<int> trace_y;
     bool mMute = 0;
     bool sMute = 0;
     bool hard = 1;
@@ -40,6 +42,22 @@ struct Game{
         char *ps= new char[sl+1];
         strcpy(ps, s.c_str());
         return ps;
+    }
+    void rendertrace(SDL_Texture* image){
+        if (trace_x.size() < TRACE_LENGTH && trace_y.size() < TRACE_LENGTH){
+            trace_x.push_back(disk.x);
+            trace_y.push_back(disk.y);
+        }
+        else {
+            trace_x.push_back(disk.x);
+            trace_y.push_back(disk.y);
+            trace_x.pop_front();
+            trace_y.pop_front();
+        }
+        int temp = trace_x.size();
+        for (int i=0;i<temp;++i){
+            graphics.renderTexture(image, trace_x[i] - DISK_RADIUS, trace_y[i] - DISK_RADIUS, DISK_RADIUS * 2,DISK_RADIUS * 2,50);
+        }
     }
     void destroy_image(SDL_Texture** a) {
         if (*a != NULL) {
@@ -75,7 +93,7 @@ struct Game{
         int mouse_x , mouse_y;
         TTF_Font* font = graphics.loadFont("font\\PixeloidMono-d94EV.ttf", SETTING_TEXT_SIZE);
         TTF_Font* font2 = graphics.loadFont("font\\PixeloidMono-d94EV.ttf", SETTING_TEXT_SIZE/2);
-        SDL_Texture* setting_background = graphics.loadTexture("image\\donkey.png");
+        SDL_Texture* setting_background = graphics.loadTexture("image\\star.png ");
         SDL_Texture* left_arrow = graphics.loadTexture("image\\left_arrow.png");
         SDL_Texture* right_arrow = graphics.loadTexture("image\\right_arrow.png");
         SDL_Texture* music = graphics.loadTexture("image\\music.png");
@@ -208,7 +226,7 @@ struct Game{
         SDL_Event event;
         int mouse_x , mouse_y;
         TTF_Font* font = graphics.loadFont("font\\PixeloidMono-d94EV.ttf", MENU_TEXT_SIZE);
-        SDL_Texture* menu_background = graphics.loadTexture("image\\random.png");
+        SDL_Texture* menu_background = graphics.loadTexture("image\\Starry Night - Vincent Van Gogh. (Cronosart99).png");
         SDL_Texture* button_image = graphics.loadTexture("image\\button.png");
         SDL_Texture* button_image_pressed = graphics.loadTexture("image\\32x13.png");
         SDL_Texture* play_button = graphics.renderText(PLAY_BUTTON, font, WHITE);
@@ -291,11 +309,15 @@ struct Game{
         SDL_Texture* player_bat_image = graphics.loadTexture("image\\player_bat.png");
         SDL_Texture* bot_bat_image = graphics.loadTexture("image\\bot_image.png");
         SDL_Texture* disk_image = graphics.loadTexture("image\\disk.png");
+        SDL_Texture* disk_image2 = graphics.loadTexture("image\\disk.png");
+        SDL_Texture* win_image = graphics.loadTexture("image\\won.png");
+        SDL_Texture* lose_image = graphics.loadTexture("image\\lost.png");
         Mix_Chunk* hit_sound = graphics.loadSound("music_and_sound\\retro-select-236670.wav");
         if(!sMute)graphics.setSoundVolume(hit_sound,sound_volume);
         else graphics.setSoundVolume(hit_sound,0);
         Uint32 startTime = SDL_GetTicks();
         Uint32 pausedTime = 0;
+        Uint32 counter = 0;
         initial_pos();
         bot.speed = hard?NORMAL_SPEED:NORMAL_SPEED/2;
         bot.diagonalSpeed = bot.speed/sqrt(2);
@@ -319,6 +341,8 @@ struct Game{
             behavior(bot,disk);
             graphics.renderTexture(player_bat_image, bat.x - BAT_RADIUS, bat.y - BAT_RADIUS, BAT_RADIUS * 2,BAT_RADIUS * 2);
             graphics.renderTexture(bot_bat_image, bot.x - BAT_RADIUS, bot.y - BAT_RADIUS, BAT_RADIUS * 2,BAT_RADIUS * 2);
+            if (disk.y>SCREEN_HEIGHT/2-50&&disk.y<SCREEN_HEIGHT/2+50) counter = SDL_GetTicks();
+            if (currentTime - counter < 5000)rendertrace(disk_image2);
             graphics.renderTexture(disk_image, disk.x - DISK_RADIUS, disk.y - DISK_RADIUS, DISK_RADIUS * 2,DISK_RADIUS * 2);
             if (disk.player_win) {
                 player_won();
@@ -326,7 +350,18 @@ struct Game{
             else if (disk.bot_win) {
                 bot_won();
             }
-            if (bot_score==WIN_POINT||player_score==WIN_POINT)quit = true;
+            if (bot_score==WIN_POINT || player_score==WIN_POINT || (passedTime / 1000) >= INITIAL_TIME){
+                graphics.prepareScene();
+                if(bot_score > player_score){
+                    graphics.renderTexture(lose_image, 0, 0, SCREEN_WIDTH,SCREEN_WIDTH);
+                }
+                else {
+                    graphics.renderTexture(win_image, 0, 0, SCREEN_WIDTH,SCREEN_WIDTH);
+                }
+                graphics.presentScene();
+                SDL_Delay(1000);
+                quit = true;
+            }
             const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
             if (currentKeyStates[SDL_SCANCODE_ESCAPE]) {
                 Uint32 pauseStartTime = SDL_GetTicks();
@@ -335,7 +370,7 @@ struct Game{
                 startTime = SDL_GetTicks() + pausedTime - passedTime;
                 if(!sMute)graphics.setSoundVolume(hit_sound,sound_volume);
                 else graphics.setSoundVolume(hit_sound,0);
-                bot.speed = hard?NORMAL_SPEED:NORMAL_SPEED/2;
+                bot.speed = hard?NORMAL_SPEED:EASY_SPEED;
                 bot.diagonalSpeed = bot.speed/sqrt(2);
             }
             graphics.presentScene();
@@ -352,7 +387,7 @@ struct Game{
                         pausedTime += (SDL_GetTicks() - pauseStartTime);
                         setting(gMusic,quit);
                         startTime = SDL_GetTicks() + pausedTime - passedTime;
-                        bot.speed = hard?NORMAL_SPEED:NORMAL_SPEED/2;
+                        bot.speed = hard?NORMAL_SPEED:EASY_SPEED;
                         bot.diagonalSpeed = bot.speed/sqrt(2);
                         if(!sMute)graphics.setSoundVolume(hit_sound,sound_volume);
                         else graphics.setSoundVolume(hit_sound,0);
@@ -362,6 +397,8 @@ struct Game{
         }
         if (hit_sound != nullptr) Mix_FreeChunk( hit_sound );
         hit_sound = NULL;
+        destroy_image(&win_image);
+        destroy_image(&lose_image);
         destroy_image(&board_image);
         destroy_image(&player_bat_image);
         destroy_image(&bot_bat_image);

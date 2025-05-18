@@ -1,4 +1,6 @@
-#include <iostream>
+#include<iostream>
+#include<vector>
+#include<deque>
 #include<cmath>
 #include<string>
 #include <algorithm>
