@@ -70,6 +70,6 @@ const double START_POS_DISK_X = BOARD_WIDTH / 2+0.05;
 const double START_POS_DISK_Y = SCREEN_HEIGHT / 2;
 const int BOT_WON_Y = SCREEN_HEIGHT/4*3;
 const int PLAYER_WON_Y = SCREEN_HEIGHT/4;
-
+const int POWER_UP_TIME = 5000;
 
 #endif // DEFS_H_INCLUDED

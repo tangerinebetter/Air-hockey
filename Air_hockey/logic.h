@@ -5,7 +5,7 @@ struct Bat {
     double x, y;
     double dx = 0, dy = 0;
     bool moved=false;
-    double speed = NORMAL_SPEED;
+    double speed = NORMAL_SPEED * 1.25;
     double diagonalSpeed = speed/sqrt(2);
 
     void move() {
@@ -44,16 +44,10 @@ struct Bat {
         if (y - BAT_RADIUS < SCREEN_HEIGHT / 2 - 1) y = SCREEN_HEIGHT / 2 - 1 + BAT_RADIUS;
         if (y + BAT_RADIUS > SCREEN_HEIGHT - 1) y = SCREEN_HEIGHT - 1 - BAT_RADIUS;
     }
-
     void batMove(){
         const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
         moved=false;
-        /*if (currentKeyStates[SDL_SCANCODE_LSHIFT]){
-            speed = INITIAL_SPEED*2;
-        }
-        else {
-            speed = INITIAL_SPEED;
-        } demo nut shift*/
+
         if (currentKeyStates[SDL_SCANCODE_UP] && currentKeyStates[SDL_SCANCODE_RIGHT]) {
             turnNorthEast();
             moved = true;
@@ -117,6 +111,7 @@ struct Disk{
     bool bot_win = 0;
     double x,y;
     double dx = 0, dy = 0;
+    double max_speed = MAX_DISK_SPEED;
     double decceleration = DECCELERATION;
     void wallHit(){
         if (y - DISK_RADIUS <= 0){
@@ -144,7 +139,7 @@ struct Disk{
         double tspeed = dx*sin + dy*cos;
         dx = tspeed * sin - nspeed * cos + bat.dx;
         dy = tspeed * cos + nspeed * sin + bat.dy;
-        while(MAX_DISK_SPEED * MAX_DISK_SPEED < dx*dx + dy*dy){
+        while(max_speed * max_speed < dx*dx + dy*dy ){
             dx *= decceleration;
             dy *= decceleration;
         }
@@ -162,7 +157,7 @@ struct Disk{
         double tspeed = dx*sin + dy*cos;
         dx = tspeed * sin - nspeed * cos + bot.dx;
         dy = tspeed * cos + nspeed * sin + bot.dy;
-        while(MAX_DISK_SPEED * MAX_DISK_SPEED < dx*dx + dy*dy){
+        while(max_speed * max_speed < dx*dx + dy*dy ){
             dx *= decceleration;
             dy *= decceleration;
         }
@@ -172,7 +167,7 @@ struct Disk{
             y -= overlap * sin;
         }
     }
-    void movement(const Bat& bat,const Bot& bot,Graphics& graphics,Mix_Chunk* hit_sound){
+    void movement(const Bat& bat,const Bot& bot,Graphics& graphics,Mix_Chunk* hit_sound, const bool& speed_up){
         if (pow(bat.x - x, 2)+pow(bat.y - y, 2) <= 4 * BAT_RADIUS * DISK_RADIUS + 2){
             graphics.play(hit_sound);
             collision(bat);
@@ -199,8 +194,10 @@ struct Disk{
         }
         x += dx;
         y += dy;
-        dx *= decceleration;
-        dy *= decceleration;
+        if (!speed_up){
+            dx *= decceleration;
+            dy *= decceleration;
+        }
         if (abs(dx) < MINIMUM_DISK_SPEED && abs(dy) < MINIMUM_DISK_SPEED){
             dx = 0;
             dy = 0;

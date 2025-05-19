@@ -16,6 +16,7 @@ struct Game{
     bool mMute = 0;
     bool sMute = 0;
     bool hard = 1;
+    bool speed_up = 0;
     void initial_pos(){
         bat.x = START_POS_PLAYER_X;
         bat.y = START_POS_PLAYER_Y;
@@ -312,6 +313,7 @@ struct Game{
         SDL_Texture* disk_image2 = graphics.loadTexture("image\\disk.png");
         SDL_Texture* win_image = graphics.loadTexture("image\\won.png");
         SDL_Texture* lose_image = graphics.loadTexture("image\\lost.png");
+        SDL_Texture* speed = graphics.loadTexture("image\\speed.png");
         Mix_Chunk* hit_sound = graphics.loadSound("music_and_sound\\retro-select-236670.wav");
         if(!sMute)graphics.setSoundVolume(hit_sound,sound_volume);
         else graphics.setSoundVolume(hit_sound,0);
@@ -337,18 +339,52 @@ struct Game{
             int seconds = (passedTime / 1000) % 60;
             score_and_time(minutes, seconds);
             bat.batMove();
-            disk.movement(bat,bot,graphics,hit_sound);
+            disk.movement(bat,bot,graphics,hit_sound,speed_up);
             behavior(bot,disk);
             graphics.renderTexture(player_bat_image, bat.x - BAT_RADIUS, bat.y - BAT_RADIUS, BAT_RADIUS * 2,BAT_RADIUS * 2);
             graphics.renderTexture(bot_bat_image, bot.x - BAT_RADIUS, bot.y - BAT_RADIUS, BAT_RADIUS * 2,BAT_RADIUS * 2);
-            if (disk.y>SCREEN_HEIGHT/2-50&&disk.y<SCREEN_HEIGHT/2+50) counter = SDL_GetTicks();
-            if (currentTime - counter < 5000)rendertrace(disk_image2);
+            if(!speed_up){
+                if (currentTime - counter > POWER_UP_TIME){
+                    graphics.renderTexture(speed, START_POS_DISK_X - BAT_RADIUS, START_POS_DISK_Y - BAT_RADIUS, BAT_RADIUS * 2, BAT_RADIUS * 2);
+                    if (pow(disk.x - START_POS_DISK_X, 2)+pow(disk.y - START_POS_DISK_Y, 2) <= 4 * BAT_RADIUS * DISK_RADIUS){
+                        counter = SDL_GetTicks();
+                        speed_up = true;
+                        disk.max_speed = MAX_DISK_SPEED * 2;
+                    }
+                }
+            }
+            else {
+                rendertrace(disk_image2);
+                if (currentTime - counter > POWER_UP_TIME){
+                    speed_up = false;
+                    counter = SDL_GetTicks();
+                    while (!trace_x.empty()){
+                        trace_x.pop_back();
+                        trace_y.pop_back();
+                    }
+                    disk.max_speed = MAX_DISK_SPEED;
+                }
+            }
             graphics.renderTexture(disk_image, disk.x - DISK_RADIUS, disk.y - DISK_RADIUS, DISK_RADIUS * 2,DISK_RADIUS * 2);
             if (disk.player_win) {
                 player_won();
+                speed_up = false;
+                while (!trace_x.empty()){
+                    trace_x.pop_back();
+                    trace_y.pop_back();
+                }
+                disk.max_speed = MAX_DISK_SPEED;
+                counter = SDL_GetTicks();
             }
             else if (disk.bot_win) {
                 bot_won();
+                speed_up = false;
+                while (!trace_x.empty()){
+                    trace_x.pop_back();
+                    trace_y.pop_back();
+                }
+                disk.max_speed = MAX_DISK_SPEED;
+                counter = SDL_GetTicks();
             }
             if (bot_score==WIN_POINT || player_score==WIN_POINT || (passedTime / 1000) >= INITIAL_TIME){
                 graphics.prepareScene();
@@ -404,6 +440,9 @@ struct Game{
         destroy_image(&bot_bat_image);
         destroy_image(&disk_image);
         destroy_image(&pause);
+        destroy_image(&disk_image2);
+        destroy_image(&speed);
+
     }
     void game_play(){
         graphics.init();
