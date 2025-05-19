@@ -17,6 +17,7 @@ Các nguồn assets và nguồn tham khảo:
 - font: Pixeloid by GGBotNet https://www.fontspace.com/category/8-bit
 - menu, setting background: @Cronosart99
 - các hình còn lại (đĩa, sân đấu, nút bấm, icon....) được vẽ bằng trang web: https://www.pixilart.com/draw?ref=home-page
+- header graphics dùng code mẫu của cô
 - có tham khảo về phần tính toán va chạm giữa 2 vật thể và hành vi của bot từ trang github: https://github.com/vgladush/air_hockey
 
 Các tính năng trong game:
