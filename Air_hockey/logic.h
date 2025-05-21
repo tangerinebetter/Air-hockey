@@ -214,14 +214,11 @@ void behavior(Bot& bot,const Disk& disk){
     if (predictY > SCREEN_HEIGHT / 2){
         bot.dy = (bot.y > SCREEN_HEIGHT/5 ? -bot.speed : 0);
     }
-    else if (predictY < bot.y + BAT_RADIUS / 2){
+    else if (predictY < bot.y + BAT_RADIUS ){
         bot.dy = -bot.speed;
     }
-    else if (distanceY > distanceX || bot.speed > distanceX ){
-        bot.dy = (bot.speed < distanceY ? bot.speed : distanceY);
-    }
     else {
-        bot.dy = bot.speed * distanceY / distanceX;
+        bot.dy = (bot.speed < distanceY ? bot.speed : distanceY);
     }
     while (bot.speed*bot.speed < bot.dx*bot.dx + bot.dy*bot.dy){
         bot.dx *= 0.98;
