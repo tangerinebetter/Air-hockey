@@ -208,9 +208,9 @@ struct Disk{
 void behavior(Bot& bot,const Disk& disk){
     double predictX = disk.x + disk.dx;
     double predictY = disk.y + disk.dy;
-    double distanceX = predictX - bot.x;
+    double distanceX = abs(predictX - bot.x);
     double distanceY = predictY - bot.y;
-    bot.dx = bot.speed < distanceX ? bot.speed : distanceX;
+    bot.dx = (bot.speed < distanceX ? bot.speed : distanceX) * (predictX < bot.x ? -1 : 1);
     if (predictY > SCREEN_HEIGHT / 2){
         bot.dy = (bot.y > SCREEN_HEIGHT/5 ? -bot.speed : 0);
     }
